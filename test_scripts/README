@@ -1,0 +1,60 @@
+README for test_scripts for FindAlmostSymmetry
+
+Ben Knueven - 11 Jul 17
+
+
+Table 2:
+
+The computational tests for Table 2 can be invoked by running the python 
+script ./table2.py, which puts the output tees for each run into the directory
+./table2output/. The python script table2_collect_results.py then parses 
+the solver tees and loads the results into the dictionaries results_sol
+and results_time, which give \gamma^G_k and seconds for Table 2.
+
+The group sizes were collected separately using get_group_sizes.py, 
+and the group sizes were gathered by inspecting the tee for one 
+pass of the algorithm. (Of course, different solutions may
+have different group sizes.)
+
+
+Figures 4 and 6:
+
+The script ./scaling_tests.py runs the computational results that 
+comprise these figures, and dumps the output to ./scaling_tests/
+
+
+Figures 5 and 7:
+
+The script randomTester.py runs the computational results for Figures 5 and 7,
+and outputs the random branching results to ./random_results/ and the node
+counts for edgeUse branching and local branching to ./node_counts/.
+
+
+Table 3:
+
+The script to run the results in Table 3 is 
+./branching_counts_tests/branching_counts.py
+
+
+Tables 4 and 7:
+
+The script to run the results for Tables 4 and 7 is 
+./track_edges_tests/track_edges.py. 
+./track_edges_tests/track_edges_collect_results.py writes a summary csv 
+for each graph tested, the values of which are those in Tables 4 and 7.
+
+
+Tables 5 and 6:
+
+The script to run the computational tests for Tables 5 and 6 is ./heuristic.py.
+The summaries for each are then written to .xlsx files using 
+./heuristic_collect_results2.py, which depends on ./table2_collect_results.py 
+to compute the values in Table 5.
+
+
+Table 8:
+
+The script ./table2_test_2_disjunctions.py runs the computational results 
+for Table 8, and dumps the tees in ./table2_test_2_disjunctions/. The results 
+can be parsed by making the appropriate modifications to 
+./table2_collect_results.py
