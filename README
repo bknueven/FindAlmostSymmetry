@@ -1,0 +1,246 @@
+Instructions for FindAlmostSymmetry
+
+Ben Knueven - 11 Jul 17
+
+
+INSTALLATION
+
+This software has two main dependencies which are not typically
+found in your favorite distro's software repository, namely
+nauty and PEBBL. You'll need a unix-like OS, a C/C++ compiler,
+a form MPI installed, svn, python, GNU autoconf,
+and GNU libtool, all of which should be available from
+your favorite package manager.
+
+nauty can be downloaded from the nauty/Traces webpage at
+http://pallini.di.uniroma1.it/ . The makefile for 
+FindAlmostSymmetry defaults to /opt/nauty25r9, however
+this is easily changed, so untar nauty's files wherever
+you like. After navigating to the directory it was untared,
+nauty needs to be complied. Run
+
+./configure --enable-tls
+
+to configure nauty in a thread-safe manner. After that
+run 
+
+make
+
+to compile nauty. Finally, it's probably a good idea to make 
+certain everything went smoothly, so run
+
+make checks
+
+followed by
+
+./runalltests
+
+to run the test bundled with nauty. Further information about
+nauty can be found in the nauty and Traces User's Guide available
+at http://pallini.di.uniroma1.it/Guide.html .
+
+PEBBL is perhaps a bit more challenging to install. PEBBL can
+be checked-out by using the following command:
+
+svn checkout https://software.sandia.gov/svn/acro/acro-pebbl/trunk acro-pebbl
+
+which will create a new subdirectory arco-pebbl for PEBBL. 
+FindAlmostSymmetry defaults to PEBBL being in /opt/acro-pebbl. 
+Setting up PEBBL can be a bit of a challenge. If the author's
+memory serves correctly a version of autoconf <= 1.09 it needed
+to correctly configure PEBBL. Assuming this is installed on your system,
+PEBBL can be configured an complied by issuing the following
+commands:
+
+./setup
+autoreconf -i -f
+./configure --with-mpi-compilers=yes
+make
+
+For more information on installing PEBBL the user is referred to
+the PEBBL 1.4.1 User Guide, available at 
+http://rutcor.rutgers.edu/pub/rrr/reports2014/02_2014.pdf
+
+Finally, to install FindAlmostSymmetry extract the tarball
+and go to the directory FindAlmostSymmetry was extracted to. 
+Modify the Makefile so that $PEBBL_DIR and $NAUTY_DIR reflect 
+the directories where PEBBL and nauty are installed, respectively. 
+After saving, the program can simply be compiled by issuing
+
+make
+
+in the FindAlmostSymmetry directory. The executable 
+findAlmost should appear in the directory, which is 
+the main executable file for the program.
+
+
+RUNNING
+
+The program can be run for a budget B and an input graph 
+graph_file by running 
+
+./findAlmost --budget=B graph_file
+
+which will put the solution in graph_file.sol.txt. For
+example, to use the included graph wikiGraph with a budget
+1, execute the following command:
+
+./findAlmost --budget=1 wikiGraph
+
+This will launch FindAlmostSymmetry in single-thread mode and
+produce the output file wikiGraph.sol.txt, which should read:
+
+Almost symmetries solution:
+Objective value = 3
+Edges deleted: (1,5)
+Nontrival orbits: 1 6 (2); 2 4 (2); 3 5 (2);
+
+The first line describes the solutions, the objective
+value is the number of orbits, edges deleted are
+the edges removed from the graph, and Nontrivial orbits
+lists the nontrivial orbits of the vertices in the optimal
+solution, that is, the orbits that don't contain just a single
+vertex. The orbits are separated by a semicolon, and the 
+number in paratheses are the number of vertices in that orbit.
+
+The input graph should be in the DIMACS graph format, which
+numbers the vertices 1 up to n. Any line beginning with c
+is ignored, and the first non-comment line should be 
+
+p edge #VERTICES #EDGES
+
+where #VERTICES is replaced by the number of vertices and 
+#EDGES is replace by the number of edges. After this line
+the edges are listed on a line beginning with e, i.e.,
+
+e 1 5
+
+would specify that the edge (1,5) is in the graph. 
+FindAlmostSymmetry assumes the input graph is simple and 
+undirected. Digraphs are not supported yet and graphs with
+self-loops will cause errors.  For more information see 
+the included example wikiGraph or checkout
+http://prolland.free.fr/works/research/dsat/dimacs.html
+under "Input Files" for more on the DIMACS graph format
+assumed in FindAlmostSymmetry. The graphs found at 
+http://mat.gsia.cmu.edu/COLOR/instances.html (with
+.col extensions) and http://pallini.di.uniroma1.it/Graphs.html
+(under DIMACS format) as used in the paper will work as 
+input without modification. Most of the graphs tested
+are pulled from http://mat.gsia.cmu.edu/COLOR/instances.html
+with their file names listed in the computational results.
+The random graphs are pulled from http://pallini.di.uniroma1.it/Graphs.html
+under ran10 (direct link: http://pallini.di.uniroma1.it/library/here_dim/ran10.zip)
+All the graphs tested in the paper can be found in ./test_graphs
+
+
+Running with multiple threads can be done using the mpirun command.
+For instance, to use N threads and budget B with test_graph, run:
+
+mpirun -np N ./findAlmost --budget=B test_graph
+
+which will use N threads during PEBBL's parallel search. The
+solution will be in test_graph.sol.txt. It should be noted that
+since PEBBL's search in parallel is not deterministic,
+different solutions may be found during successive runs
+of the same problem (though they will all have the same 
+objective value).
+
+
+Random branching can be invoked using the option 
+--randomBranching=true.  To evoke with random branching
+on the included graph wikiGraph with 
+a budget of 1, we would execute:
+
+./findAlmost --budget=1 --randomBranching=true wikiGraph
+
+The user is advised that random branching seems to be pretty bad, 
+so this should only be tried with graphs and budgets that take <60 
+seconds to solve in single-thread mode.
+
+
+The local branching method can be similary invoked with
+the option --localBranching=true:
+
+./findAlmost --budget=1 --localBranching=true wikiGraph
+
+
+The branching strength test from Table 3 can be run
+using the --testBranchingStrength option:
+
+./findAlmost --budget=1 --testBranchingStrength=true wikiGraph
+
+Note that this simply test strong branching at the root
+node and then terminates. The output for the number 
+refined by each edge possibility is then in the file
+wikiGraph.budgetB.refinedByFixedBranch.txt and the 
+number refined by edgeUse branching is in the file
+wikiGraph.budgetB.refinedByDefaultBranch.txt.
+
+
+The heuristic results in Tables 4 and 5 can be reproduced using
+the justDiveLeft option. Again assuming a budget B and graph
+file test_graph, we can invoke the heuristic using the global
+branching rule as such:
+
+./findAlmost --budget=B --justDiveLeft=true test_graph
+
+To invoke the heuristic using the local branching rule, the
+localBranching option must be specified as well:
+
+./findAlmost --budget=B --justDiveLeft=true --localBranching=true test_graph
+
+
+The track edges tests must be run in serial mode, and can
+be specified using the trackEdges option. As an example
+
+./findAlmost --budget=B --trackEdges=true test_graph
+
+will keep track of where the 2nd ranked edge ends up in 
+each child node, and will output the result to the file
+test_graph.trackedEdges.budgetB.txt in the current working 
+directory. The ranks are indexed starting at 0.
+
+
+Finally, the results in Table 8 can be constructed with the
+--disjunctNumber setting. In particular, this sets the number
+of edges to branch on, so for Table 8 the correct option is 
+a value of 2:
+
+./findAlmost --budget=B --disjunctNumber=2 test_graph
+
+though any positive integer will work. The default behavior
+is with --disjunctNumber=1.
+
+
+All other options, including those for PEBBL, can be found by executing
+
+./findAlmost --help
+
+
+Python scripts which automate much of the data gathering for the
+tables and figures is in ./test_scripts/, and are detailed
+in the README therein.
+
+
+FILE LAYOUT
+
+NautyGraph.hpp and NautyGraph.cpp contain the header and implementation
+for the data structures used. Class DenseGraph provides a C++ interface
+for nauty's DENSEGRAPH format, and Class NautyGraph inherits from 
+DenseGraph with an interface to nauty's automorphism solver.
+Classes Edge and EdgeList are used for storing edges and arrays
+of edges, respectively.
+
+findAlmost.hpp and findAlmost.cpp are the main files for the program.
+Algorithms 1-5 in the paper are implemented in findAlmost.cpp and 
+named similarily as in the paper, with the exception of parRefineByMatching
+with is refineByMatching with the HungarianSolve step parallelized.
+The rest of these files implement the interface with PEBBL along
+with parFindAlmost.hpp.
+
+
+
+Thanks for reading! If you have any questions please direct them to 
+bknueven at vols.utk.edu
+
